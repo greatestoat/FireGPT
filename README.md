@@ -236,6 +236,14 @@ projected created on docker port with terminal
 
 <img width="1919" height="958" alt="image" src="https://github.com/user-attachments/assets/e42d8b34-6635-424d-a8b5-ea5aa8c7fdcf" />
 
+User ask to generate application 
+<img width="1918" height="957" alt="image" src="https://github.com/user-attachments/assets/54ffb9d3-2734-4a74-9e66-d840a277e2b3" />
+
+The response:
+application generation:
+<img width="1532" height="608" alt="application generation" src="https://github.com/user-attachments/assets/b60c26c4-0836-430b-b4f7-fd80807ec15e" />
+
+
 Profile:
 <img width="1918" height="966" alt="image" src="https://github.com/user-attachments/assets/dfddf36d-6485-475a-a146-81ebb9a11f26" />
 
