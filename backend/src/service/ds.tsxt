@@ -1,0 +1,279 @@
+
+import path             from 'path';
+import fs               from 'fs/promises';
+import { spawn, exec }  from 'child_process';
+import { promisify }    from 'util';
+import net              from 'net';
+
+const execAsync = promisify(exec);
+
+const PROJECTS_ROOT = process.env.PROJECTS_ROOT
+  || path.join(process.cwd(), 'projects');
+
+// ── Minimal Vite+React scaffold ───────────────────────────────────────────────
+const VITE_SCAFFOLD = {
+  'package.json': JSON.stringify({
+    name: 'vite-project', private: true, version: '0.0.0', type: 'module',
+    scripts: { dev: 'vite', build: 'vite build', preview: 'vite preview' },
+    dependencies: { react: '^18.3.1', 'react-dom': '^18.3.1' },
+    devDependencies: { '@vitejs/plugin-react': '^4.3.1', vite: '^5.4.10' },
+  }, null, 2),
+
+  'vite.config.js': `import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    host: '0.0.0.0',
+    port: __PORT__,
+    strictPort: true,
+    hmr: { clientPort: __PORT__, host: 'localhost' },
+    allowedHosts: 'all',
+  },
+})
+`,
+  'index.html': `<!doctype html>
+<html lang="en">
+  <head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1.0" /><title>Vite + React</title></head>
+  <body><div id="root"></div><script type="module" src="/src/main.jsx"></script></body>
+</html>
+`,
+  'src/main.jsx': `import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.jsx'
+import './App.css'
+ReactDOM.createRoot(document.getElementById('root')).render(<React.StrictMode><App /></React.StrictMode>)
+`,
+  'src/App.jsx': `import { useState } from 'react'
+import './App.css'
+function App() {
+  return (
+    <div className="app">
+      <h1>Ready!</h1>
+      <p>Use the AI Generator to build something amazing.</p>
+    </div>
+  )
+}
+export default App
+`,
+  'src/App.css': `*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0}
+.app{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:1rem;padding:2rem;text-align:center}
+h1{font-size:2rem;color:#38bdf8}p{color:#64748b}
+`,
+};
+
+class NativeService {
+  constructor() {
+    // projectId → { port, hostDir, viteProcess }
+    this.projects = new Map();
+    this.nextPort  = 4100;
+  }
+
+  // ── createReactProject ────────────────────────────────────────────────────
+  async createReactProject(projectId, onLog, hostDir) {
+    hostDir = hostDir || path.join(PROJECTS_ROOT, projectId);
+    await fs.mkdir(hostDir, { recursive: true });
+
+    // Already tracked — reuse
+    if (this.projects.has(projectId)) {
+      const entry = this.projects.get(projectId);
+      await onLog(`[system] Project already set up on port ${entry.port} — reusing.\n`);
+      this.projects.set(projectId, { ...entry, hostDir });
+      return { port: entry.port };
+    }
+
+    const port = await this._allocatePort();
+
+    // Write scaffold files
+    await onLog(`[system] Writing Vite scaffold files...\n`);
+    for (const [rel, raw] of Object.entries(VITE_SCAFFOLD)) {
+      const content  = raw.replace(/__PORT__/g, String(port));
+      const fullPath = path.join(hostDir, rel);
+      await fs.mkdir(path.dirname(fullPath), { recursive: true });
+      await fs.writeFile(fullPath, content, 'utf8');
+    }
+
+    // npm install
+    await onLog(`[system] Installing npm dependencies...\n`);
+    await this._runNpm(['install'], hostDir, onLog);
+    await onLog(`[system] ✓ Scaffold complete on port ${port}\n`);
+
+    this.projects.set(projectId, { port, hostDir, viteProcess: null });
+    return { port };
+  }
+
+  // ── startDevServer ────────────────────────────────────────────────────────
+  async startDevServer(projectId, onLog) {
+    const entry = this.projects.get(projectId);
+    if (!entry) throw new Error(`No project entry for ${projectId}`);
+
+    const { port, hostDir } = entry;
+
+    // Kill existing Vite process if any
+    if (entry.viteProcess) {
+      try { entry.viteProcess.kill(); } catch (_) {}
+      this.projects.set(projectId, { ...entry, viteProcess: null });
+      await new Promise(r => setTimeout(r, 500));
+    }
+
+    // Free the port if something else is using it
+    await this._killPort(port).catch(() => {});
+    await new Promise(r => setTimeout(r, 300));
+
+    await onLog(`[system] Starting Vite on port ${port}...\n`);
+
+    // On Windows use npm run dev so the PATH is resolved correctly
+    const isWin    = process.platform === 'win32';
+    const npmCmd   = isWin ? 'npm.cmd' : 'npm';
+
+    const viteProcess = spawn(npmCmd, ['run', 'dev'], {
+      cwd:   hostDir,
+      shell: isWin,
+      env:   { ...process.env, FORCE_COLOR: '0' },
+    });
+
+    viteProcess.stdout.on('data', (d) => onLog?.(d.toString()));
+    viteProcess.stderr.on('data', (d) => onLog?.(`[vite] ${d.toString()}`));
+    viteProcess.on('exit', (code) => {
+      onLog?.(`[system] Vite process exited (code ${code})\n`);
+    });
+    viteProcess.on('error', (err) => {
+      onLog?.(`[system] Vite spawn error: ${err.message}\n`);
+    });
+
+    this.projects.set(projectId, { ...entry, viteProcess });
+
+    await this._waitForPort(port, 60_000, onLog);
+    return port;
+  }
+
+  // ── writeFile ─────────────────────────────────────────────────────────────
+  async writeFile(projectId, filePath, content) {
+    const entry   = this.projects.get(projectId);
+    const baseDir = entry?.hostDir || path.join(PROJECTS_ROOT, projectId);
+    const full    = path.join(baseDir, filePath);
+    await fs.mkdir(path.dirname(full), { recursive: true });
+    await fs.writeFile(full, content, 'utf8');
+    // Vite watches the host filesystem directly — no extra step needed
+  }
+
+  // ── writeFiles ────────────────────────────────────────────────────────────
+  async writeFiles(projectId, files, onLog) {
+    const entry   = this.projects.get(projectId);
+    const baseDir = entry?.hostDir || path.join(PROJECTS_ROOT, projectId);
+
+    for (const f of files) {
+      const relPath = (f.path || f.file_path || '').replace(/\\/g, '/').replace(/^\.?\//, '');
+      if (!relPath) continue;
+      const fullPath = path.join(baseDir, relPath);
+      await fs.mkdir(path.dirname(fullPath), { recursive: true });
+      await fs.writeFile(fullPath, f.content ?? '', 'utf8');
+    }
+    // Vite is watching the host folder — it will HMR automatically
+  }
+
+  // ── runCommand ────────────────────────────────────────────────────────────
+  async runCommand(projectId, command, onLog) {
+    const entry = this.projects.get(projectId);
+    const cwd   = entry?.hostDir || path.join(PROJECTS_ROOT, projectId);
+
+    return new Promise((resolve, reject) => {
+      const proc = spawn(command, {
+        cwd,
+        shell: true,
+        env:   { ...process.env },
+      });
+      proc.stdout.on('data', (d) => onLog?.(d.toString()));
+      proc.stderr.on('data', (d) => onLog?.(d.toString()));
+      proc.on('close',  (code) => code === 0 ? resolve() : reject(new Error(`Exit code ${code}`)));
+      proc.on('error',  reject);
+    });
+  }
+
+  // ── stopProject ───────────────────────────────────────────────────────────
+  async stopProject(projectId) {
+    const entry = this.projects.get(projectId);
+    if (!entry) return;
+    if (entry.viteProcess) {
+      try { entry.viteProcess.kill(); } catch (_) {}
+    }
+    await this._killPort(entry.port).catch(() => {});
+    this.projects.delete(projectId);
+  }
+
+  getPort(projectId)   { return this.projects.get(projectId)?.port; }
+  isRunning(projectId) { return this.projects.has(projectId); }
+
+  // ── Private helpers ───────────────────────────────────────────────────────
+
+  async _allocatePort() {
+    while (await this._isPortInUse(this.nextPort)) {
+      this.nextPort++;
+    }
+    return this.nextPort++;
+  }
+
+  _isPortInUse(port) {
+    return new Promise((resolve) => {
+      const server = net.createServer();
+      server.once('error',     () => resolve(true));
+      server.once('listening', () => { server.close(); resolve(false); });
+      server.listen(port, '0.0.0.0');
+    });
+  }
+
+  async _killPort(port) {
+    try {
+      if (process.platform === 'win32') {
+        const { stdout } = await execAsync(`netstat -ano | findstr :${port}`);
+        const pids = new Set();
+        for (const line of stdout.trim().split('\n')) {
+          const parts = line.trim().split(/\s+/);
+          const pid   = parts[parts.length - 1];
+          if (pid && /^\d+$/.test(pid) && pid !== '0') pids.add(pid);
+        }
+        for (const pid of pids) {
+          await execAsync(`taskkill /PID ${pid} /F`).catch(() => {});
+        }
+      } else {
+        await execAsync(`fuser -k ${port}/tcp`).catch(() => {});
+      }
+    } catch (_) {}
+  }
+
+  async _runNpm(args, cwd, onLog) {
+    const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+    return new Promise((resolve, reject) => {
+      const proc = spawn(npmCmd, args, {
+        cwd,
+        shell: process.platform === 'win32',
+        env:   { ...process.env },
+      });
+      proc.stdout.on('data', (d) => onLog?.(d.toString()));
+      proc.stderr.on('data', (d) => onLog?.(d.toString()));
+      proc.on('close', (code) => code === 0 ? resolve() : reject(new Error(`npm ${args.join(' ')} failed`)));
+      proc.on('error', reject);
+    });
+  }
+
+  async _waitForPort(port, timeoutMs, onLog) {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      const open = await new Promise(resolve => {
+        const sock = net.createConnection({ port, host: 'localhost' });
+        sock.once('connect', () => { sock.destroy(); resolve(true);  });
+        sock.once('error',   () => {                resolve(false); });
+        setTimeout(() => { sock.destroy(); resolve(false); }, 1000);
+      });
+      if (open) {
+        await onLog?.(`[system] ✓ Vite is up on port ${port}\n`);
+        return;
+      }
+      await new Promise(r => setTimeout(r, 800));
+    }
+    await onLog?.(`[system] Warning: port ${port} not ready after ${timeoutMs / 1000}s\n`);
+  }
+}
+
+export default new NativeService();

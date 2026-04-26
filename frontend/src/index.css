@@ -1,0 +1,163 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-surface text-white font-body antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 60% at 50% -10%, rgba(74, 95, 255, 0.15) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 40% at 90% 100%, rgba(74, 95, 255, 0.08) 0%, transparent 60%);
+    min-height: 100vh;
+  }
+
+  ::selection {
+    @apply bg-ink-600 text-white;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-surface;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-ink-700;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-panel border border-border rounded-2xl;
+    box-shadow: 0 0 0 1px rgba(74, 95, 255, 0.05), 0 24px 48px rgba(0, 0, 0, 0.4);
+  }
+
+  .input-field {
+    @apply w-full bg-surface border border-border rounded-xl px-4 py-3
+           text-white placeholder-white/30 font-body text-sm
+           transition-all duration-200 outline-none
+           focus:border-ink-500 focus:ring-2 focus:ring-ink-500/20;
+  }
+
+  .input-field:focus {
+    box-shadow: 0 0 0 3px rgba(74, 95, 255, 0.15);
+  }
+
+  .input-field.error {
+    @apply border-red-500/60 focus:border-red-500 focus:ring-red-500/20;
+  }
+
+  .btn-primary {
+    @apply w-full py-3 px-6 rounded-xl font-display font-semibold text-sm
+           bg-ink-600 hover:bg-ink-500 text-white
+           transition-all duration-200 active:scale-[0.98]
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100;
+    box-shadow: 0 0 20px rgba(74, 95, 255, 0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    box-shadow: 0 0 30px rgba(74, 95, 255, 0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+  }
+
+  .btn-ghost {
+    @apply py-2 px-4 rounded-lg font-body text-sm text-white/60
+           hover:text-white hover:bg-white/5 transition-all duration-200;
+  }
+
+  .label {
+    @apply block text-xs font-display font-medium text-white/50 uppercase tracking-widest mb-2;
+  }
+
+  .error-message {
+    @apply text-red-400 text-xs mt-1.5 flex items-center gap-1.5;
+  }
+
+  .success-banner {
+    @apply bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 
+           rounded-xl px-4 py-3 text-sm flex items-center gap-2;
+  }
+
+  .error-banner {
+    @apply bg-red-500/10 border border-red-500/30 text-red-400 
+           rounded-xl px-4 py-3 text-sm flex items-center gap-2;
+  }
+
+  .orb {
+    @apply absolute rounded-full pointer-events-none;
+    filter: blur(80px);
+    mix-blend-mode: screen;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.6) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-ink {
+    background: linear-gradient(135deg, #6d86ff 0%, #4a5fff 50%, #3244f5 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .animate-delay-100 { animation-delay: 100ms; }
+  .animate-delay-200 { animation-delay: 200ms; }
+  .animate-delay-300 { animation-delay: 300ms; }
+  .animate-delay-400 { animation-delay: 400ms; }
+}
+.youtube-btn {
+  margin-top: 8px;
+  background: #1f2937;
+}
+
+.youtube-btn:hover {
+  background: #374151;
+}
+
+.youtube-input-box {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.youtube-input-box input {
+  padding: 6px 8px;
+  font-size: 0.8rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--fg);
+}
+
+.youtube-input-box button {
+  padding: 6px;
+  font-size: 0.8rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  background: #dc2626;
+  color: white;
+}
+
+.youtube-input-box button:hover {
+  background: #b91c1c;
+}
