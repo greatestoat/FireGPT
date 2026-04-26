@@ -201,3 +201,8 @@ This is a **learning + advanced fullstack AI project** combining:
 ## 📜 License
 
 MIT License
+
+Pictures:
+
+<img width="1918" height="957" alt="image" src="https://github.com/user-attachments/assets/cf67b966-0d2d-4fc0-9a4a-9df675472f2c" />
+
