@@ -1,4 +1,4 @@
-# 🚀 AI Fullstack Platform (GPT + Bolt Clone)
+# 🚀 AI Fullstack Platform (GPT + Bolt Clone + Notebook)
 
 ## 📌 Overview
 
