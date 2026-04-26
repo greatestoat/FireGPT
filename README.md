@@ -236,6 +236,10 @@ projected created on docker port with terminal
 
 <img width="1919" height="958" alt="image" src="https://github.com/user-attachments/assets/e42d8b34-6635-424d-a8b5-ea5aa8c7fdcf" />
 
+Profile:
+<img width="1918" height="966" alt="image" src="https://github.com/user-attachments/assets/dfddf36d-6485-475a-a146-81ebb9a11f26" />
+
+
 Developing subapp 
 <img width="1918" height="962" alt="image" src="https://github.com/user-attachments/assets/3b496ce7-307a-42fc-a482-9dcd7f8cdf82" />
 
