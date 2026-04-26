@@ -204,5 +204,37 @@ MIT License
 
 Pictures:
 
+System ineterface login:
+
 <img width="1918" height="957" alt="image" src="https://github.com/user-attachments/assets/cf67b966-0d2d-4fc0-9a4a-9df675472f2c" />
+
+Gpt model:
+<img width="1918" height="946" alt="image" src="https://github.com/user-attachments/assets/b3a262b8-ef54-4ef4-961d-a4460f5e0761" />
+
+GpT Model response:
+
+<img width="1918" height="950" alt="image" src="https://github.com/user-attachments/assets/9a9efa1c-91b1-465d-bb5a-39aa0de0441c" />
+
+Notebook model:
+
+<img width="1918" height="957" alt="image" src="https://github.com/user-attachments/assets/8ae8c0f8-cfcb-4bd9-902f-e2beb7caccdd" />
+Notebook model response:
+
+<img width="1918" height="952" alt="image" src="https://github.com/user-attachments/assets/5e0c96d4-ee79-4e9c-967d-320dae23c131" />
+
+App developer using AI interface:
+
+<img width="1917" height="956" alt="image" src="https://github.com/user-attachments/assets/e27ba5de-9ccc-4015-b784-47ec8c77b373" />
+
+
+creation of project:
+<img width="1918" height="952" alt="image" src="https://github.com/user-attachments/assets/c86931c0-e9a6-43d7-9ab1-f777cf3244c8" />
+
+projected created on docker port with terminal
+
+<img width="1918" height="955" alt="image" src="https://github.com/user-attachments/assets/41827496-1322-4820-a836-2de95b213e96" />
+
+<img width="1919" height="958" alt="image" src="https://github.com/user-attachments/assets/e42d8b34-6635-424d-a8b5-ea5aa8c7fdcf" />
+
+
 
