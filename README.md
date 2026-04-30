@@ -1,3 +1,4 @@
+![Uploading preview_fix_diagram.svg…]()
 # 🚀 AI Fullstack Platform (GPT + Bolt Clone + Notebook)
 
 ## 📌 Overview
