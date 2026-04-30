@@ -1,4 +1,4 @@
-<img width="255" height="150" alt="preview_fix_diagram" src="https://github.com/user-attachments/assets/967cb522-3276-4faf-b738-9c736424fbab" />
+
 
 # 🚀 AI Fullstack Platform (GPT + Bolt Clone + Notebook)
 <svg width="100%" viewBox="0 0 680 400" role="img" style="" xmlns="http://www.w3.org/2000/svg">
